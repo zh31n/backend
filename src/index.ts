@@ -1,4 +1,5 @@
 import express, {Request, Response} from 'express';
+import {dbT} from "./Types";
 
 
 const app = express();
@@ -8,7 +9,10 @@ const jsonMiddleware = express.json();
 app.use(jsonMiddleware);
 
 
-let db = {
+
+
+
+let db:dbT = {
     products: [
         {
             id: 1,
@@ -53,8 +57,8 @@ let db = {
 app.get('/products/:id?', (req: Request, res: Response) => {
     if (req.params.id) {
         const id = req.params.id;
-        const data = db.products.filter(p => p.id === +id)
-        if (!data.length) {
+        const data = db.products.find(p => p.id === +id)
+        if (!data) {
             res.sendStatus(404)
         }
         res.json(data)
@@ -82,7 +86,7 @@ app.post('/products', (req: Request, res: Response) => {
 
     db.products.push(createdProduct);
     res.status(201).json(createdProduct)
-})
+});
 app.delete('/products/:id', (req: Request, res: Response) => {
     if (!req.params.id) {
         res.sendStatus(400)
@@ -94,6 +98,23 @@ app.delete('/products/:id', (req: Request, res: Response) => {
         newProducts: db.products
     }
     res.json(response);
+});
+app.put('/products/:id',(req,res) => {
+    if(!req.params.id || !req.body.name){
+        res.sendStatus(400)
+        return;
+    }
+    let foundProduct = db.products.find(p => p.id === +req.params.id)
+    if(!foundProduct){
+        res.sendStatus(404)
+        res.json({'message':'product not found'})
+    }
+    if(foundProduct){
+        foundProduct.name = req.body.name;
+        foundProduct.photo = req.body?.photo
+        foundProduct.price = req.body?.price;
+        res.status(200).json(foundProduct)
+    }
 })
 
 app.listen(port, () => {
